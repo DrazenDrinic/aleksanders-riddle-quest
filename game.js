@@ -291,6 +291,59 @@ inputEl.addEventListener('keydown', (e) => {
   }
 });
 
+// ===== LEADERBOARD =====
+const LEADERBOARD_KEY = 'riddleQuestLeaderboard';
+const MAX_ENTRIES = 5;
+const MEDALS = ['🥇','🥈','🥉','🏅','🏅'];
+
+function loadLeaderboard() {
+  try {
+    const raw = localStorage.getItem(LEADERBOARD_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveLeaderboard(entries) {
+  try { localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(entries)); } catch {}
+}
+
+function qualifiesForTop(score, board) {
+  if (score <= 0) return false;
+  if (board.length < MAX_ENTRIES) return true;
+  return score > board[board.length - 1].score;
+}
+
+function addEntry(name, score, total) {
+  const board = loadLeaderboard();
+  const entry = { name: (name.trim() || 'Player').slice(0, 20), score, total, date: Date.now() };
+  board.push(entry);
+  board.sort((a, b) => (b.score - a.score) || (a.date - b.date));
+  const trimmed = board.slice(0, MAX_ENTRIES);
+  saveLeaderboard(trimmed);
+  return { board: trimmed, entry };
+}
+
+function escapeHTML(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function leaderboardHTML(highlight) {
+  const board = loadLeaderboard();
+  if (board.length === 0) {
+    return `<div class="leaderboard-empty">No scores yet — be the first! 🚀</div>`;
+  }
+  return board.map((e, i) => {
+    const isMe = highlight && e.date === highlight.date && e.name === highlight.name;
+    return `<div class="leaderboard-row rank-${i+1}${isMe ? ' me' : ''}">
+      <span class="rank">${MEDALS[i] || '•'}</span>
+      <span class="name">${escapeHTML(e.name)}${isMe ? ' <span class="you">← you!</span>' : ''}</span>
+      <span class="score">${e.score}/${e.total}</span>
+    </div>`;
+  }).join('');
+}
+
 // ===== FINAL SCREEN =====
 function showFinal() {
   progressEl.style.width = '100%';
@@ -303,7 +356,11 @@ function showFinal() {
   else if (pct >= 30) { emoji = '😊'; msg = "Nice try! Practice makes perfect!"; }
   else                { emoji = '🌱'; msg = "Good effort! Let's try again!"; }
 
-  document.getElementById('game-view').innerHTML = `
+  const board = loadLeaderboard();
+  const isHighScore = qualifiesForTop(correctCount, board);
+  const gameView = document.getElementById('game-view');
+
+  const headerHTML = `
     <div class="final-screen">
       <div class="final-emoji">${emoji}</div>
       <h2>${msg}</h2>
@@ -311,15 +368,76 @@ function showFinal() {
         You got <b style="color:#1aab4a">${correctCount}</b> right out of <b>${total}</b>!<br>
         <span style="font-size:1rem;color:#666">That's ${pct}%!</span>
       </div>
-      <div class="controls" style="justify-content:center">
-        <button id="restart-btn">Play Again! 🔁</button>
+  `;
+
+  if (isHighScore) {
+    gameView.innerHTML = headerHTML + `
+      <div class="highscore-box">
+        <div class="highscore-title">🎉 NEW HIGH SCORE! 🎉</div>
+        <div class="highscore-sub">You made the Top 5! Enter your name:</div>
+        <div class="answer-row">
+          <input type="text" id="name-input" placeholder="Your name" maxlength="20" autocomplete="off" />
+          <button id="save-btn">Save! ⭐</button>
+        </div>
       </div>
     </div>
-  `;
-  document.getElementById('restart-btn').addEventListener('click', () => {
-    location.reload();
-  });
+    `;
+    const nameInput = document.getElementById('name-input');
+    setTimeout(() => nameInput.focus(), 100);
+    const doSave = () => {
+      const name = nameInput.value;
+      const { entry } = addEntry(name, correctCount, total);
+      renderLeaderboardView(entry, { emoji, msg, pct, total });
+      confettiBurst(60);
+    };
+    document.getElementById('save-btn').addEventListener('click', doSave);
+    nameInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); doSave(); }
+    });
+  } else {
+    renderLeaderboardView(null, { emoji, msg, pct, total });
+  }
+
   confettiBurst(60);
+}
+
+function renderLeaderboardBlock(highlight) {
+  return `
+    <div class="leaderboard">
+      <div class="leaderboard-title">🏆 Top 5 Riddle Champions 🏆</div>
+      ${leaderboardHTML(highlight)}
+    </div>
+  `;
+}
+
+function renderPlayAgainBlock() {
+  return `
+    <div class="controls" style="justify-content:center">
+      <button id="restart-btn">Play Again! 🔁</button>
+    </div>
+    </div>
+  `;
+}
+
+function renderLeaderboardView(highlight, ctx) {
+  const gameView = document.getElementById('game-view');
+  gameView.innerHTML = `
+    <div class="final-screen">
+      <div class="final-emoji">${ctx.emoji}</div>
+      <h2>${ctx.msg}</h2>
+      <div class="final-stats">
+        You got <b style="color:#1aab4a">${correctCount}</b> right out of <b>${ctx.total}</b>!<br>
+        <span style="font-size:1rem;color:#666">That's ${ctx.pct}%!</span>
+      </div>
+      ${renderLeaderboardBlock(highlight)}
+      ${renderPlayAgainBlock()}
+  `;
+  attachPlayAgain();
+}
+
+function attachPlayAgain() {
+  const btn = document.getElementById('restart-btn');
+  if (btn) btn.addEventListener('click', () => location.reload());
 }
 
 // ===== CONFETTI =====
