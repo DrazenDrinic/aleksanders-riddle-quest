@@ -365,8 +365,8 @@ function showFinal() {
       <div class="final-emoji">${emoji}</div>
       <h2>${msg}</h2>
       <div class="final-stats">
-        You got <b style="color:#1aab4a">${correctCount}</b> right out of <b>${total}</b>!<br>
-        <span style="font-size:1rem;color:#666">That's ${pct}%!</span>
+        You got <b style="color:#2e7d32">${correctCount}</b> right out of <b>${total}</b>!<br>
+        <span style="font-size:1rem;color:#8b5a2b">That's ${pct}%!</span>
       </div>
   `;
 
@@ -426,8 +426,8 @@ function renderLeaderboardView(highlight, ctx) {
       <div class="final-emoji">${ctx.emoji}</div>
       <h2>${ctx.msg}</h2>
       <div class="final-stats">
-        You got <b style="color:#1aab4a">${correctCount}</b> right out of <b>${ctx.total}</b>!<br>
-        <span style="font-size:1rem;color:#666">That's ${ctx.pct}%!</span>
+        You got <b style="color:#2e7d32">${correctCount}</b> right out of <b>${ctx.total}</b>!<br>
+        <span style="font-size:1rem;color:#8b5a2b">That's ${ctx.pct}%!</span>
       </div>
       ${renderLeaderboardBlock(highlight)}
       ${renderPlayAgainBlock()}
@@ -441,7 +441,7 @@ function attachPlayAgain() {
 }
 
 // ===== CONFETTI =====
-const CONFETTI_COLORS = ['#ff5ea8','#ffce3a','#6a5cff','#3ecf74','#5b8cff','#ff7a59','#b57edc'];
+const CONFETTI_COLORS = ['#f4c542','#e8a838','#e8832c','#9d5ddb','#5b3a9e','#fdf6e3','#d4941e'];
 function launchConfetti() {
   confettiBurst(35);
 }
@@ -462,7 +462,7 @@ function confettiBurst(n) {
 }
 
 // ===== FLOATING EMOJI DECORATIONS =====
-const FLOATERS = ['⭐','🎈','🌈','✨','🎨','🧸','🍭','🎁','💫','🌸','🦋','🐝'];
+const FLOATERS = ['⭐','✨','💫','🔮','📜','📖','🕯️','💎','🗝️','🏆','🌙','☄️','🪄','📗'];
 function makeFloaters() {
   for (let i = 0; i < 14; i++) {
     const f = document.createElement('div');
